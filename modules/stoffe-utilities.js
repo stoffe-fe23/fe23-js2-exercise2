@@ -176,7 +176,7 @@ export function getIsValidObject(obj, requiredProperties = 1) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 // Attempt to determine if the specified URL points toward an image depending on its MIME type
-// Returns a promise resolving to a boolean value if the URL points to an image. 
+// Returns a promise resolving to a boolean value indicating if the URL points to an image. 
 export async function getUrlIsImage(imageUrl) {
     const response = await fetch(imageUrl);
 
@@ -276,6 +276,8 @@ export function addClassToElement(targetElement, classesToAdd) {
 export function createHTMLElement(elementType, elementText, parentElement = null, elementClass = '', elementAttributes = null, allowHTML = false) {
     const newElement = document.createElement(elementType);
 
+    elementType = elementType.toLowerCase();
+
     // Set any attributes on the element
     if (getIsValidObject(elementAttributes, 1)) {
         for (const attributeName in elementAttributes) {
@@ -287,18 +289,44 @@ export function createHTMLElement(elementType, elementText, parentElement = null
     addClassToElement(newElement, elementClass);
 
     // Set content of element, if specified
-    if (getIsValidText(elementText, 1)) {
-        if (allowHTML) {
-            newElement.innerHTML = elementText;
+    if (getIsValidArray(elementText)) {
+        // If type is a list and text is an array, build list items
+        if ((elementType == 'ul') || (elementType == 'ol')) {
+            for (const listItemText of elementText) {
+                const newListItem = document.createElement("li");
+                setElementContent(newListItem, listItemText, allowHTML);
+                newElement.appendChild(newListItem);
+            }
         }
         else {
-            newElement.innerText = elementText;
+            setElementContent(newElement, elementText[0], allowHTML);
         }
     }
+    else if (getIsValidText(elementText, 1)) {
+        if (elementType == 'img') {
+            newElement.alt = elementText;
+        }
+        else {
+            setElementContent(newElement, elementText, allowHTML);
+        }
+    }
+
 
     // Append to parent, if set
     if ((parentElement !== undefined) && (parentElement !== null)) {
         parentElement.appendChild(newElement);
     }
     return newElement;
+}
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+// Sets the content of an element as text or HTML depending on the allowHTML parameter. 
+export function setElementContent(element, content, allowHTML) {
+    if (allowHTML) {
+        element.innerHTML = content;
+    }
+    else {
+        element.innerText = content;
+    }
 }
