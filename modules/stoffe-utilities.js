@@ -192,8 +192,8 @@ export async function getUrlIsImage(imageUrl) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 // Toggle page Dark Mode on and off
 export function toggleDarkMode(enableDarkMode) {
-    const toggleDark = document.querySelector("#colormode-toggle-dark");
-    const toggleLight = document.querySelector("#colormode-toggle-light");
+    const toggleDark = document.querySelector("#darkmode-toggle-dark");
+    const toggleLight = document.querySelector("#darkmode-toggle-light");
 
     if (enableDarkMode) {
         document.body.classList.add("darkmode");
@@ -270,8 +270,10 @@ export function addClassToElement(targetElement, classesToAdd) {
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 // Create and return a new DOM element with text content, optionally appending it to a parent element.
-// elementClass can ba a string or an array of strings. 
-// The elementAttributes parameter can be an object with a property for each attribute to set on the HTML element. 
+//  * elementText can either be a string holding the content of the tag or the ALT of an img tag, or an array of strings 
+//    with the options for UL, OL and SELECT tags. In the latter case the string can also be formated like: value|textlabel|optgroup
+//  * elementClass can ba a string or an array of strings. 
+//  * The elementAttributes parameter can be an object with a property for each attribute to set on the HTML element. 
 // Set CSS "white-space: pre-wrap;" on element if allowHTML is true and you wish to keep newlines displayed. 
 export function createHTMLElement(elementType, elementText, parentElement = null, elementClass = '', elementAttributes = null, allowHTML = false) {
     const newElement = document.createElement(elementType);
@@ -296,6 +298,29 @@ export function createHTMLElement(elementType, elementText, parentElement = null
                 const newListItem = document.createElement("li");
                 setElementContent(newListItem, listItemText, allowHTML);
                 newElement.appendChild(newListItem);
+            }
+        }
+        // If type is a select form element and text is an array, build select option list
+        else if (elementType == 'select') {
+            for (const optionItemText of elementText) {
+                const [optValue, optLabel, optGroup] = optionItemText.split('|');
+                const newOptionItem = document.createElement("option");
+
+                setElementContent(newOptionItem, (optLabel ?? optValue), allowHTML);
+                newOptionItem.value = optValue;
+
+                if (optGroup !== undefined) {
+                    let optionGroup = newElement.querySelector(`optgroup[label="${optGroup}"]`);
+                    if ((optionGroup === undefined) || (optionGroup === null)) {
+                        optionGroup = document.createElement("optgroup");
+                        optionGroup.label = optGroup;
+                        newElement.appendChild(optionGroup);
+                    }
+                    optionGroup.appendChild(newOptionItem);
+                }
+                else {
+                    newElement.appendChild(newOptionItem);
+                }
             }
         }
         else {
