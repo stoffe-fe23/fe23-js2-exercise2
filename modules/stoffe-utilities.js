@@ -68,13 +68,73 @@ export function getFirstParentElementByClass(startElement, className, maxDepth =
 }
 
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Set the content of an element to a string that may only contain whitelisted HTML elements
+// contentString = string with the content to assign to the element
+// contentElement = the HTML element to assign the content to
+// allowedTags = array with the names of tags that are allowed to be used in the content (i.e. ['strong', 'em'])
+// allowedAttributes = array with the names of attributes that may be used on allowed tags in the content
+export function setContentWithTagFilter(contentString, contentElement, allowedTags = null, allowedAttributes = null) {
+    const tempElement = document.createElement("template");
+    tempElement.innerHTML = contentString;
+
+    if ((contentElement === undefined) || (contentElement === null)) {
+        contentElement = document.createElement("div");
+    }
+
+    if ((allowedTags === undefined) || (allowedTags === null) || (allowedTags.length < 1)) {
+        allowedTags = ['strong', 'em', 'b', 'i', 'a', 'blockquote'];
+    }
+    if ((allowedAttributes === undefined) || (allowedAttributes === null) || (allowedAttributes.length < 1)) {
+        allowedAttributes = ['href', 'src', 'alt', 'class', 'id', 'target'];
+    }
+
+    allowedTags = allowedTags.map((elem) => elem.toUpperCase());
+    allowedAttributes = allowedAttributes.map((elem) => elem.toLowerCase());
+
+    copyContentWithFilteredTags(tempElement.content, contentElement, allowedTags, allowedAttributes);
+    return contentElement;
+}
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Helper function for setContentWithFilteredTags(), step through the baseElement and copy allowed child elements
+// to the target element and add the test as text. 
+function copyContentWithFilteredTags(baseElement, copyElement, allowedTags, allowedAttributes) {
+    if (baseElement.childNodes.length > 0) {
+        baseElement.childNodes.forEach((checkChild) => {
+            if (checkChild.nodeType == Node.ELEMENT_NODE) {
+                let currElement;
+                if (allowedTags.includes(checkChild.tagName)) {
+                    currElement = document.createElement(checkChild.tagName);
+                    for (const attrib of checkChild.attributes) {
+                        if (allowedAttributes.includes(attrib.name)) {
+                            currElement.setAttribute(attrib.name, attrib.value);
+                        }
+                    }
+                    copyElement.appendChild(currElement);
+                }
+                else {
+                    currElement = copyElement;
+                }
+                copyContentWithFilteredTags(checkChild, currElement, allowedTags, allowedAttributes);
+            }
+            else if (checkChild.nodeType == Node.TEXT_NODE) {
+                const currElement = document.createTextNode(checkChild.textContent);
+                copyElement.appendChild(currElement);
+            }
+        });
+    }
+}
+
+
 ///////////////////////////////////////////////////////////////////////////////////////////
 // Split up a string into the specified tag, and everything else, returned as an array.
 // I.e:
 // const chunks = splitStringByTag(myString, '<a class="text-link" ', '</a>')
 // ... would return an array where links starting with '<a class="text-link' and are closed by
 // '</a>' are split out from the rest of the text. 
-export function splitStringByTag(textString, openTag, closeTag) {
+export function splitStringByTag(textString, openTag, closeTag, tagName = 'tag') {
     const fragments = [];
 
     let openIdx = 0;
@@ -91,7 +151,7 @@ export function splitStringByTag(textString, openTag, closeTag) {
         else {
             closeIdx = textString.indexOf(closeTag, openIdx) + closeTag.length;
             fragments.push({ value: textString.substring(prevIdx, openIdx), type: "text" });
-            fragments.push({ value: textString.substring(openIdx, closeIdx), type: "tag" });
+            fragments.push({ value: textString.substring(openIdx, closeIdx), type: tagName });
         }
 
         prevIdx = closeIdx;
@@ -102,6 +162,7 @@ export function splitStringByTag(textString, openTag, closeTag) {
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////
+// OLD: Use setContentWithTagFilter() instead if possible... 
 // Allow a specific tag but not other kinds of HTML in the textString string, setting it as
 // the content of the targetElement. 
 // I.e:
@@ -144,6 +205,7 @@ export function setTextWithTag(targetElement, textString, tagName, openTag, clos
         }
     }
 }
+
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////
@@ -274,7 +336,7 @@ export function addClassToElement(targetElement, classesToAdd) {
 //    with the options for UL, OL and SELECT tags. In the latter case the string can also be formated like: value|textlabel|optgroup
 //  * elementClass can ba a string or an array of strings. 
 //  * The elementAttributes parameter can be an object with a property for each attribute to set on the HTML element. 
-// Set CSS "white-space: pre-wrap;" on element if allowHTML is true and you wish to keep newlines displayed. 
+// Set CSS "white-space: pre-wrap;" on element if allowHTML is true and you wish to keep newlines displayed like innerText. 
 export function createHTMLElement(elementType, elementText, parentElement = null, elementClass = '', elementAttributes = null, allowHTML = false) {
     const newElement = document.createElement(elementType);
 
