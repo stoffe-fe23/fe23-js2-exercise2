@@ -38,7 +38,6 @@ class Dice {
             const dotElement = document.createElement("div");
             diceElement.appendChild(dotElement);
         }
-        console.log("TYALL", diceElement);
         return diceElement;
     }
 

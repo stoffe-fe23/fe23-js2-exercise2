@@ -73,7 +73,6 @@ function createDice(parentContainerSelector) {
         }
     });
     diceContainer.addEventListener("click", (event) => {
-        console.log("ROLL!");
         diceObj.roll();
         diceElement.remove();
         diceElement = diceObj.render();
