@@ -1,11 +1,28 @@
 
 import { Dice } from './modules/Dice.js';
-import { Account } from './modules/Account.js';
+import { Account, PrivateAccount } from './modules/Account.js';
 import { Members, Member } from './modules/Members.js';
 import * as StoffeUtils from './modules/stoffe-utilities.js';
 
 const myAccount = new Account('spara', 3000);
 const memberList = new Members("Medlemmar");
+
+
+////// TEST START //////
+const personalAccount = new PrivateAccount('Sparkonto', 10000, 'stoffe');
+const cloneAccount = personalAccount.clone();
+
+const mergedAccount = {};
+Object.assign(mergedAccount, personalAccount, myAccount); // { ...myAccount, ...personalAccount };
+
+mergedAccount.holder = "John Doe";
+personalAccount.deposit(12000);
+
+console.log("Account", myAccount, myAccount.holder);
+console.log("Personal", personalAccount, personalAccount.holder);
+console.log("Cloned", cloneAccount, cloneAccount.holder);
+console.log("Merged", mergedAccount, mergedAccount.holder);
+////// TEST END //////
 
 
 StoffeUtils.setEventListener('#roll-dice', 'click', (event) => {
@@ -26,7 +43,7 @@ StoffeUtils.setEventListener('#account-form', 'submit', (event) => {
         myAccount.withdraw(inputBox.value.trim());
     }
 
-    outputBox.innerHTML += `<br>Dice value is: ${myAccount.getBalance()}`;
+    outputBox.innerHTML += `<br>Account balance is: ${myAccount.getBalance()}`;
 });
 
 StoffeUtils.setEventListener('#members-form', 'submit', (event) => {
@@ -53,7 +70,7 @@ function createDice(parentContainerSelector) {
     const diceWrapper = document.createElement("div");
     const diceContainer = document.createElement("div");
     const freezeButton = document.createElement("button");
-    let diceElement = diceObj.render();
+    let diceElement = diceObj.build();
 
     diceWrapper.classList.add("dice-wrapper");
     diceContainer.classList.add("no-dice");
@@ -75,7 +92,7 @@ function createDice(parentContainerSelector) {
     diceContainer.addEventListener("click", (event) => {
         diceObj.roll();
         diceElement.remove();
-        diceElement = diceObj.render();
+        diceElement = diceObj.build();
         diceContainer.prepend(diceElement);
     });
 }

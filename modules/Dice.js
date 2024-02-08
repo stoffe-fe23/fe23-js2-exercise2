@@ -1,6 +1,4 @@
 
-
-
 class Dice {
     #sides = 6;
     #current = 1;
@@ -30,7 +28,7 @@ class Dice {
         return this.#frozen;
     }
 
-    render() {
+    build() {
         const diceElement = document.createElement("div");
         diceElement.classList.add("die");
         diceElement.classList.add(this.#getDiceClass());
